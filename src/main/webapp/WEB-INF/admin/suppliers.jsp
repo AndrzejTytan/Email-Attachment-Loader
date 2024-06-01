@@ -6,7 +6,7 @@
 </head>
 <body>
 List of all time series suppliers: <br>
-<a href="">Create New</a><br>
+<a href="/admin/suppliers/form">Create New</a><br>
 <table>
     <thead>
     <tr>
@@ -28,7 +28,7 @@ List of all time series suppliers: <br>
             <td><c:out value="${supplier.fileColumnIndexPriceValue}"/></td>
             <td>
                 <a href="/admin/suppliers/delete/${supplier.id}">Delete</a>
-                <a href="">Edit</a>
+                <a href="/admin/suppliers/form/${supplier.id}">Edit</a>
             </td>
         </tr>
     </c:forEach>

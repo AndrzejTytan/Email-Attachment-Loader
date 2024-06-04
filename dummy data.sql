@@ -16,3 +16,12 @@ values
     ('ID0000000003', 'My Item 1', 'USD'),
     ('ID0000000004', 'My Item 1', 'EUR'),
     ('ID0000000005', 'My Item 1', 'PLN');
+
+insert into processed_time_series_emails( time_series_supplier_id, email_receieved, email_processed)
+values
+    (1, '2024-06-01', '2024-06-01'),
+    (1, '2024-06-02', '2024-06-02'),
+    (1, '2024-06-03', '2024-06-03'),
+    (1, '2024-06-04', '2024-06-04'),
+    (1, '2024-06-05', '2024-06-05'),
+    (1, '2024-06-06', '2024-06-06')

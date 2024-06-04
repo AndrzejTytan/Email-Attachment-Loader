@@ -19,7 +19,8 @@ public class ItemDetail {
     private String pricingCurrencyIso;
 
     // TODO
-    // to contain a map for time series data?
+    // to contain a map for time series data? indexing of date, key = offset from start date as Integer?
+    // osobna encja na time series
     // https://www.baeldung.com/hibernate-persisting-maps
 
     public Long getId() {

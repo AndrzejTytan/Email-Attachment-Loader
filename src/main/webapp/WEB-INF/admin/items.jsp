@@ -25,6 +25,7 @@ List of all time series suppliers: <br>
             <td><c:out value="${item.name}"/></td>
             <td><c:out value="${item.pricingCurrencyIso}"/></td>
             <td>
+                <a href="/admin/items/time-series/${item.id}">Details</a>
                 <a href="/admin/items/delete/${item.id}">Delete</a>
                 <a href="/admin/items/form/${item.id}">Edit</a>
             </td>

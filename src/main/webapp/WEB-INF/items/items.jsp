@@ -22,7 +22,7 @@ List of all items: <br>
             <td><c:out value="${item.identifierCode}"/></td>
             <td><c:out value="${item.pricingCurrencyIso}"/></td>
             <td>
-                <a href="">Details</a>
+                <a href="/items/time-series/${item.id}">Details</a>
             </td>
         </tr>
     </c:forEach>

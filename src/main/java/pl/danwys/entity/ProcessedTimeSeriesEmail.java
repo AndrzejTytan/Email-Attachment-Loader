@@ -10,7 +10,7 @@ public class ProcessedTimeSeriesEmail {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // used only in one view - doesn't need to be optimal
+    // used only in one view - no performance concerns hence EAGER
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "time_series_supplier_id")
     private TimeSeriesSupplier timeSeriesSupplier;

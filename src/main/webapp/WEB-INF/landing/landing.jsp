@@ -10,5 +10,6 @@ Hi mum<br>
 <a href="/items">Items</a><br>
 <a href="/admin/suppliers">Suppliers - admin</a><br>
 <a href="/admin/sources">Emails - admin</a><br>
+<a href="/admin/trigger">Manual trigger for mailbox check</a><br>
 </body>
 </html>

@@ -1,5 +1,6 @@
 package pl.danwys.service;
 
+import ch.qos.logback.classic.Logger;
 import org.springframework.stereotype.Service;
 
 import java.io.FileNotFoundException;
@@ -35,10 +36,7 @@ import java.util.*;
 public class GmailConnector implements MailboxConnector {
     private final CsvLoader csvLoader;
     private final TimeSeriesSupplierRepository timeSeriesSupplierRepository;
-    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-    private static final String TOKENS_DIRECTORY_PATH = "tokens";
-    private static final List<String> SCOPES = Collections.singletonList(GmailScopes.MAIL_GOOGLE_COM);
-    private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
+    JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
     public GmailConnector(CsvLoader csvLoader,
                           TimeSeriesSupplierRepository timeSeriesSupplierRepository) throws GeneralSecurityException, IOException {
@@ -62,11 +60,16 @@ public class GmailConnector implements MailboxConnector {
             // TODO
         } catch (IOException e) {
             // TODO
+
         }
     }
 
     // Creates an authorized Credential object.
     private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
+
+        String TOKENS_DIRECTORY_PATH = "tokens";
+        List<String> SCOPES = Collections.singletonList(GmailScopes.MAIL_GOOGLE_COM);
+        String CREDENTIALS_FILE_PATH = "/credentials.json";
         try (InputStream in = GmailConnector.class.getResourceAsStream(CREDENTIALS_FILE_PATH)) {
             if (in == null) {
                 throw new FileNotFoundException("Credentials not found: " + CREDENTIALS_FILE_PATH);
@@ -108,7 +111,8 @@ public class GmailConnector implements MailboxConnector {
 
             Optional<TimeSeriesSupplier> timeSeriesSupplier = getSender(messageContents.getPayload().getHeaders());
             if (timeSeriesSupplier.isEmpty()) {
-                return; // TODO notify
+                // TODO notify admin of new supplier
+                continue;
             }
 
             List<MessagePart> messageParts = messageContents
@@ -142,14 +146,14 @@ public class GmailConnector implements MailboxConnector {
                 break;
             }
         }
-        return timeSeriesSupplierRepository.findTimeSeriesSupplierByEmail(senderEmail);
+        return timeSeriesSupplierRepository.findTimeSeriesSupplierByEmail(senderEmail); // TODO gets called in a loop - rather call once per invocation of the class' public method
     }
 
     private void processMessageParts(Gmail gmailService, List<MessagePart> messageParts,
                                      LocalDateTime dateReceived, TimeSeriesSupplier timeSeriesSupplier) {
         for (MessagePart messagePart : messageParts) {
             String attachmentName = messagePart.getFilename();
-            if (attachmentName == null) continue;
+            if (attachmentName == null || attachmentName.isEmpty()) continue;
             boolean hasAllowedFileExtension = attachmentName.endsWith(".csv"); // TODO change to 'list of allowed extensions'
             if (hasAllowedFileExtension) {
                 try {
@@ -158,7 +162,6 @@ public class GmailConnector implements MailboxConnector {
                     byte[] attachmentContentsByteArray = Base64.getDecoder().decode(attachmentContentsBase64);
                     if (attachmentName.endsWith(".csv")) { // TODO change to strategy pattern for easier code extension later?
                         csvLoader.parse(attachmentContentsByteArray, dateReceived, timeSeriesSupplier);
-
                     }
                 } catch (IOException e) {
                     System.out.println("IO Exception processing attachment: "); // TODO

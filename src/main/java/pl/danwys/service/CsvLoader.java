@@ -60,7 +60,7 @@ public class CsvLoader implements AttachmentLoader {
             }
             ItemDetail itemDetail = itemDetailO.get();
             BigDecimal priceValue = new BigDecimal(row[priceValueColumnIndex]);
-            LocalDate priceDate = LocalDate.parse(row[priceDateColumnIndex], DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+            LocalDate priceDate = LocalDate.parse(row[priceDateColumnIndex], DateTimeFormatter.ofPattern("dd/MM/yyyy"));
 
             ItemTimeSerie itemTimeSerie = new ItemTimeSerie(itemDetail, sourceEmail, priceValue, priceDate);
             itemTimeSerieRepository.save(itemTimeSerie);

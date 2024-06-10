@@ -25,6 +25,16 @@ public class ItemTimeSerie {
     @Column(name = "price_date")
     private LocalDate priceDate;
 
+    public ItemTimeSerie(ItemDetail itemDetail, ProcessedTimeSeriesEmail processedTimeSeriesEmail, BigDecimal priceValue, LocalDate priceDate) {
+        this.itemDetail = itemDetail;
+        this.processedTimeSeriesEmail = processedTimeSeriesEmail;
+        this.priceValue = priceValue;
+        this.priceDate = priceDate;
+    }
+
+    public ItemTimeSerie() {
+    }
+
     public Long getId() {
         return id;
     }

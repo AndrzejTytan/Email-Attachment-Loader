@@ -21,6 +21,15 @@ public class ProcessedTimeSeriesEmail {
     @Column(name = "email_processed")
     private LocalDateTime emailProcessed;
 
+    public ProcessedTimeSeriesEmail() {
+    }
+
+    public ProcessedTimeSeriesEmail(TimeSeriesSupplier timeSeriesSupplier, LocalDateTime emailReceieved, LocalDateTime emailProcessed) {
+        this.timeSeriesSupplier = timeSeriesSupplier;
+        this.emailReceieved = emailReceieved;
+        this.emailProcessed = emailProcessed;
+    }
+
     public Long getId() {
         return id;
     }

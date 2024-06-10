@@ -25,6 +25,8 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.*;
+import pl.danwys.entity.TimeSeriesSupplier;
+import pl.danwys.repository.TimeSeriesSupplierRepository;
 
 import java.security.GeneralSecurityException;
 import java.util.*;
@@ -32,13 +34,16 @@ import java.util.*;
 @Service
 public class GmailConnector implements MailboxConnector {
     private final CsvLoader csvLoader;
+    private final TimeSeriesSupplierRepository timeSeriesSupplierRepository;
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private static final String TOKENS_DIRECTORY_PATH = "tokens";
     private static final List<String> SCOPES = Collections.singletonList(GmailScopes.MAIL_GOOGLE_COM);
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
 
-    public GmailConnector(CsvLoader csvLoader) throws GeneralSecurityException, IOException {
+    public GmailConnector(CsvLoader csvLoader,
+                          TimeSeriesSupplierRepository timeSeriesSupplierRepository) throws GeneralSecurityException, IOException {
         this.csvLoader = csvLoader;
+        this.timeSeriesSupplierRepository = timeSeriesSupplierRepository;
     }
 
     @Override
@@ -101,14 +106,17 @@ public class GmailConnector implements MailboxConnector {
                     ZoneId.of("Etc/GMT")
             );
 
-            String sender = getSender(messageContents.getPayload().getHeaders());
-            // TODO check if exists in db and pass further
+            Optional<TimeSeriesSupplier> timeSeriesSupplier = getSender(messageContents.getPayload().getHeaders());
+            if (timeSeriesSupplier.isEmpty()) {
+                return; // TODO notify
+            }
 
             List<MessagePart> messageParts = messageContents
                     .getPayload()
                     .getParts();
 
-            processMessageParts(gmailService, messageParts, receivedDateGMT, sender);
+            processMessageParts(gmailService, messageParts, receivedDateGMT, timeSeriesSupplier.get());
+            // TODO remove label INBOX, add label "Processed" to message
         }
     }
 
@@ -124,21 +132,21 @@ public class GmailConnector implements MailboxConnector {
         }
     }
 
-    private String getSender(List<MessagePartHeader> headers) {
-        String sender = null;
+    private Optional<TimeSeriesSupplier> getSender(List<MessagePartHeader> headers) {
+        String senderEmail = null;
         for (MessagePartHeader header : headers) {
             if (header.getName().equals("From")) {
-                sender = header.getValue();
+                senderEmail = header.getValue();
                 // sender values are like "Google <google@no-reply.com> - extracting email address
-                sender = sender.substring(sender.indexOf("<") + 1, sender.indexOf(">"));
+                senderEmail = senderEmail.substring(senderEmail.indexOf("<") + 1, senderEmail.indexOf(">"));
                 break;
             }
         }
-        return sender;
+        return timeSeriesSupplierRepository.findTimeSeriesSupplierByEmail(senderEmail);
     }
 
     private void processMessageParts(Gmail gmailService, List<MessagePart> messageParts,
-                                     LocalDateTime dateReceived, String sender) {
+                                     LocalDateTime dateReceived, TimeSeriesSupplier timeSeriesSupplier) {
         for (MessagePart messagePart : messageParts) {
             String attachmentName = messagePart.getFilename();
             if (attachmentName == null) continue;
@@ -149,7 +157,8 @@ public class GmailConnector implements MailboxConnector {
                     String attachmentContentsBase64 = attachmentPart.getData();
                     byte[] attachmentContentsByteArray = Base64.getDecoder().decode(attachmentContentsBase64);
                     if (attachmentName.endsWith(".csv")) { // TODO change to strategy pattern for easier code extension later?
-                        csvLoader.parse(attachmentContentsByteArray, dateReceived, sender);
+                        csvLoader.parse(attachmentContentsByteArray, dateReceived, timeSeriesSupplier);
+
                     }
                 } catch (IOException e) {
                     System.out.println("IO Exception processing attachment: "); // TODO

@@ -1,6 +1,6 @@
 package pl.danwys.service;
 
-import ch.qos.logback.classic.Logger;
+
 import org.springframework.stereotype.Service;
 
 import java.io.FileNotFoundException;
@@ -36,10 +36,10 @@ import java.util.*;
 public class GmailConnector implements MailboxConnector {
     private final CsvLoader csvLoader;
     private final TimeSeriesSupplierRepository timeSeriesSupplierRepository;
-    JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+    private final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
     public GmailConnector(CsvLoader csvLoader,
-                          TimeSeriesSupplierRepository timeSeriesSupplierRepository) throws GeneralSecurityException, IOException {
+                          TimeSeriesSupplierRepository timeSeriesSupplierRepository) {
         this.csvLoader = csvLoader;
         this.timeSeriesSupplierRepository = timeSeriesSupplierRepository;
     }
@@ -66,13 +66,12 @@ public class GmailConnector implements MailboxConnector {
 
     // Creates an authorized Credential object.
     private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
-
         String TOKENS_DIRECTORY_PATH = "tokens";
         List<String> SCOPES = Collections.singletonList(GmailScopes.MAIL_GOOGLE_COM);
         String CREDENTIALS_FILE_PATH = "/credentials.json";
         try (InputStream in = GmailConnector.class.getResourceAsStream(CREDENTIALS_FILE_PATH)) {
             if (in == null) {
-                throw new FileNotFoundException("Credentials not found: " + CREDENTIALS_FILE_PATH);
+                throw new FileNotFoundException("Credentials not found in: " + CREDENTIALS_FILE_PATH);
             }
             GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
             GoogleAuthorizationCodeFlow flow =
@@ -155,29 +154,30 @@ public class GmailConnector implements MailboxConnector {
             String attachmentName = messagePart.getFilename();
             if (attachmentName == null || attachmentName.isEmpty()) continue;
             boolean hasAllowedFileExtension = attachmentName.endsWith(".csv"); // TODO change to 'list of allowed extensions'
-            if (hasAllowedFileExtension) {
-                try {
-                    MessagePartBody attachmentPart = getMessageAttachmentContents(gmailService, messagePart);
-                    String attachmentContentsBase64 = attachmentPart.getData();
-                    byte[] attachmentContentsByteArray = Base64.getDecoder().decode(attachmentContentsBase64);
-                    if (attachmentName.endsWith(".csv")) { // TODO change to strategy pattern for easier code extension later?
-                        csvLoader.parse(attachmentContentsByteArray, dateReceived, timeSeriesSupplier);
-                    }
-                } catch (IOException e) {
-                    System.out.println("IO Exception processing attachment: "); // TODO
-                }
+            if (!hasAllowedFileExtension) continue;
+            MessagePartBody attachmentPart = getMessageAttachmentContents(gmailService, messagePart);
+            String attachmentContentsBase64 = attachmentPart.getData();
+            byte[] attachmentContentsByteArray = Base64.getDecoder().decode(attachmentContentsBase64);
+            if (attachmentName.endsWith(".csv")) { // TODO change to strategy pattern for easier code extension later?
+                csvLoader.parse(attachmentContentsByteArray, dateReceived, timeSeriesSupplier);
             }
         }
     }
 
-    private MessagePartBody getMessageAttachmentContents(Gmail gmailService, MessagePart messagePart) throws IOException {
+    private MessagePartBody getMessageAttachmentContents(Gmail gmailService, MessagePart messagePart) {
         String messagePartId = messagePart.getPartId();
         String messageAttachmentId = messagePart.getBody().getAttachmentId();
-        return gmailService
-                .users()
-                .messages()
-                .attachments()
-                .get("me", messagePartId, messageAttachmentId)
-                .execute();
+        MessagePartBody messagePartBody = null;
+        try {
+            messagePartBody = gmailService
+                    .users()
+                    .messages()
+                    .attachments()
+                    .get("me", messagePartId, messageAttachmentId)
+                    .execute();
+        } catch (IOException e) {
+            // TODO
+        }
+        return messagePartBody;
     }
 }

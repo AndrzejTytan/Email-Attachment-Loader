@@ -31,6 +31,7 @@ import pl.danwys.repository.TimeSeriesSupplierRepository;
 
 import java.security.GeneralSecurityException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class GmailConnector implements MailboxConnector {
@@ -99,6 +100,8 @@ public class GmailConnector implements MailboxConnector {
     }
 
     private void ExtractFromMessages(Gmail gmailService, List<Message> inboxMessagesIds) {
+        Set<TimeSeriesSupplier> timeSeriesSuppliers = Set.copyOf(timeSeriesSupplierRepository.findAll());
+
         for (Message messageId : inboxMessagesIds) {
             // retrieves actual message with contents
             Message messageContents = getMessageContents(gmailService, messageId.getId());
@@ -108,19 +111,29 @@ public class GmailConnector implements MailboxConnector {
                     ZoneId.of("Etc/GMT")
             );
 
-            Optional<TimeSeriesSupplier> timeSeriesSupplier = getSender(messageContents.getPayload().getHeaders());
-            if (timeSeriesSupplier.isEmpty()) {
-                // TODO notify admin of new supplier
-                continue;
+            String senderEmail = getSenderEmail(messageContents.getPayload().getHeaders());
+            TimeSeriesSupplier timeSeriesSupplier = getTimeSeriesSupplierByEmail(timeSeriesSuppliers, senderEmail);
+            if (senderEmail == null || senderEmail.isEmpty() || timeSeriesSupplier == null) {
+                continue; // ignore if supplier is not approved / TODO notify admin of potential new supplier
             }
 
             List<MessagePart> messageParts = messageContents
                     .getPayload()
                     .getParts();
 
-            processMessageParts(gmailService, messageParts, receivedDateGMT, timeSeriesSupplier.get());
+            processMessageParts(gmailService, messageParts, receivedDateGMT, timeSeriesSupplier);
             // TODO remove label INBOX, add label "Processed" to message
         }
+    }
+
+    private TimeSeriesSupplier getTimeSeriesSupplierByEmail(Collection<TimeSeriesSupplier> timeSeriesSuppliers, String email) {
+        if (timeSeriesSuppliers == null || email == null || email.isEmpty()) return null;
+        for (TimeSeriesSupplier timeSeriesSupplier : timeSeriesSuppliers) {
+            if (timeSeriesSupplier.getEmail().equals(email)) {
+                return timeSeriesSupplier;
+            }
+        }
+        return null;
     }
 
     private Message getMessageContents(Gmail gmailService, String messageId) {
@@ -135,7 +148,7 @@ public class GmailConnector implements MailboxConnector {
         }
     }
 
-    private Optional<TimeSeriesSupplier> getSender(List<MessagePartHeader> headers) {
+    private String getSenderEmail(List<MessagePartHeader> headers) {
         String senderEmail = null;
         for (MessagePartHeader header : headers) {
             if (header.getName().equals("From")) {
@@ -145,7 +158,7 @@ public class GmailConnector implements MailboxConnector {
                 break;
             }
         }
-        return timeSeriesSupplierRepository.findTimeSeriesSupplierByEmail(senderEmail); // TODO gets called in a loop - rather call once per invocation of the class' public method
+        return senderEmail;
     }
 
     private void processMessageParts(Gmail gmailService, List<MessagePart> messageParts,

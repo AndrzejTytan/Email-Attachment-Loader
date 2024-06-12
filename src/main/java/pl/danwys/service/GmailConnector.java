@@ -31,15 +31,14 @@ import pl.danwys.repository.TimeSeriesSupplierRepository;
 
 import java.security.GeneralSecurityException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class GmailConnector implements MailboxConnector {
-    private final CsvLoader csvLoader;
+    private final AttachmentLoader csvLoader;
     private final TimeSeriesSupplierRepository timeSeriesSupplierRepository;
     private final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
-    public GmailConnector(CsvLoader csvLoader,
+    public GmailConnector(AttachmentLoader csvLoader,
                           TimeSeriesSupplierRepository timeSeriesSupplierRepository) {
         this.csvLoader = csvLoader;
         this.timeSeriesSupplierRepository = timeSeriesSupplierRepository;
@@ -58,9 +57,9 @@ public class GmailConnector implements MailboxConnector {
             if (inboxMessagesIds.isEmpty()) return;
             ExtractFromMessages(gmailService, inboxMessagesIds);
         } catch (GeneralSecurityException e) {
-            // TODO
+            // TODO logging
         } catch (IOException e) {
-            // TODO
+            // TODO logging
 
         }
     }
@@ -95,7 +94,7 @@ public class GmailConnector implements MailboxConnector {
                     .execute()
                     .getMessages();
         } catch (IOException e) {
-            throw new RuntimeException(e); //TODO
+            throw new RuntimeException(e); //TODO logging
         }
     }
 
@@ -144,7 +143,7 @@ public class GmailConnector implements MailboxConnector {
                     .get("me", messageId)
                     .execute();
         } catch (IOException e) {
-            throw new RuntimeException(e); //TODO
+            throw new RuntimeException(e); //TODO logging
         }
     }
 
@@ -189,7 +188,7 @@ public class GmailConnector implements MailboxConnector {
                     .get("me", messagePartId, messageAttachmentId)
                     .execute();
         } catch (IOException e) {
-            // TODO
+            // TODO logging
         }
         return messagePartBody;
     }

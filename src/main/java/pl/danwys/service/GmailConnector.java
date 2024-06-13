@@ -57,7 +57,7 @@ public class GmailConnector implements MailboxConnector {
 
             // retrieves list of message and thread ids
             List<Message> inboxMessagesIds = getMessagesIds(gmailService);
-            if (inboxMessagesIds.isEmpty()) return;
+            if (inboxMessagesIds == null || inboxMessagesIds.isEmpty()) return;
             ExtractFromMessages(gmailService, inboxMessagesIds);
         } catch (GeneralSecurityException e) {
             // TODO logging

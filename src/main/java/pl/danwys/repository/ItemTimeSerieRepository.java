@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface ItemTimeSerieRepository extends JpaRepository<ItemTimeSerie, Long> {
     List<ItemTimeSerie> getAllByItemDetailIdOrderByPriceDateDesc(Long itemDetailId);
+    void deleteByItemDetail_Id(Long itemDetailId);
 }

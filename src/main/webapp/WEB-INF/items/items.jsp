@@ -3,10 +3,13 @@
 <html>
 <head>
     <title>Title</title>
+<%@include file="/WEB-INF/static-jsp/head-css-js.jsp"%>
 </head>
+
 <body>
+<%@include file="/WEB-INF/static-jsp/nav-bar.jsp"%>
 List of all items: <br>
-<table>
+<table id="data-table">
     <thead>
     <tr>
         <th>Name</th>

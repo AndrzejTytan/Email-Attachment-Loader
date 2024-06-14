@@ -3,10 +3,12 @@
 <html>
 <head>
     <title>Title</title>
+    <%@include file="/WEB-INF/static-jsp/head-css-js.jsp"%>
 </head>
 <body>
+<%@include file="/WEB-INF/static-jsp/nav-bar.jsp"%>
 Emails - data sources: <br>
-<table>
+<table id="data-table">
     <thead>
     <tr>
         <th>Email ID</th>

@@ -3,11 +3,13 @@
 <html>
 <head>
     <title>Title</title>
+    <%@include file="/WEB-INF/static-jsp/head-css-js.jsp"%>
 </head>
 <body>
+<%@include file="/WEB-INF/static-jsp/nav-bar.jsp"%>
 List of all time series suppliers: <br>
 <a href="/admin/items/form">Create New</a><br>
-<table>
+<table id="data-table">
     <thead>
     <tr>
         <th>ID</th>

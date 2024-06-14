@@ -4,8 +4,10 @@
 <html>
 <head>
     <title>Title</title>
+    <%@include file="/WEB-INF/static-jsp/head-css-js.jsp"%>
 </head>
 <body>
+<%@include file="/WEB-INF/static-jsp/nav-bar.jsp"%>
 Add new or edit item: <br>
 <form:form modelAttribute="itemDetail" method="post">
     <form:hidden path="id" />
